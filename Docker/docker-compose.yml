@@ -1,0 +1,64 @@
+version: "3.8"
+volumes:
+  php-fpm-socket:
+  db-store:
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    volumes:
+      - php-fpm-socket:/var/run/php-fpm
+      - ../backend:/work/backend
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_NAME:-php_course}
+      - DB_USERNAME=${DB_USER:-php_course}
+      - DB_PASSWORD=${DB_PASS:-php_course}
+    networks:
+      - backend
+
+  web:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    ports:
+      - "${WEB_PORT}:80"
+    volumes:
+      - php-fpm-socket:/var/run/php-fpm
+      - ../backend:/work/backend
+    networks:
+        - backend
+
+  db:
+    image: mysql:latest
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - db-store:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_PASSWORD: ${DB_PASS}
+    networks:
+        - backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    depends_on:
+      - db
+    ports:
+      - 8001:80
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: php_course
+    restart: always
+    networks:
+      - backend
+
+networks:
+  backend:

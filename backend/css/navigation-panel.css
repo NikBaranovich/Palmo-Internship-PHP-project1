@@ -1,0 +1,39 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  padding: 10px !important;
+}
+
+.navbar .link {
+  text-decoration: none;
+  color: var(--text-color-contrast);
+  margin-right: 20px;
+}
+.navbar .link:hover {
+  color: var(--text-color-contrast);
+}
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-right .user-info {
+  margin-right: 10px;
+}
+
+.logout-button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.logout-button:hover{
+  color: var(--text-color-color);
+
+}
