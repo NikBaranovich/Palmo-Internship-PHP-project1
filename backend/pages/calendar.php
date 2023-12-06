@@ -1,8 +1,21 @@
 <?php
 
 use Palmo\Core\service\Db;
+use Palmo\Core\service\Validation;
 
 require './scripts/get_calendar_with_events.php';
+
+if (isset($_SESSION['previousData'])) {
+  $previousData = $_SESSION['previousData'];
+  unset($_SESSION['previousData']);
+}
+if (isset($_SESSION['errors'])) {
+  $errors = $_SESSION['errors'];
+  $_SESSION['errors'] = null;
+} else {
+  $errors = null;
+}
+
 
 $dbh = (new Db())->getHandler();
 $displayedMonth = date_create();
@@ -10,11 +23,11 @@ $currentDate = date_create();
 $year = date_format($currentDate, "y");
 $month = date_format($currentDate, "n");
 
-if (!isset($query['year']) && !isset($query['month'])) {
+if (!isset($_GET['year']) && !isset($_GET['month'])) {
   $displayedMonth = date_create();
 } else {
-  $year = $query['year'];
-  $month = $query['month'];
+  $year = $_GET['year'];
+  $month = $_GET['month'];
   $displayedMonth = date_create("{$year}-{$month}-1");
 }
 
@@ -158,20 +171,30 @@ if (isset($_SESSION['user_id'])) {
       <div class="modal-body">
         <div class="form-group">
           <label for="event-title">Event title</label>
-          <input class="form-input" type="text" id="event-title" name="event-title" @input="validateTitle" />
+          <input class="form-input" type="text" id="event-title" name="event-title" <?= isset($previousData['event-title']) ? "value= '{$previousData['event-title']}'" : '' ?> />
           <div v-color:red v-if="errors.title" class="invalid-input-error">
-            {{ errors.title }}
+            <?php if (isset($errors['event-title'])) {
+              echo "<div  class='invalid-input-error'>
+                        {$errors['event-title']}
+                    </div>";
+            }
+            ?>
           </div>
         </div>
         <div class="form-group">
           <label for="event-start-date">Start date</label>
-          <input type="datetime-local" class="form-input" name="event-start-date" id="event-start-date" v-model="newEvent.startDate" @input="validateEndDate" />
+          <input type="datetime-local" class="form-input" name="event-start-date" id="event-start-date" <?= isset($previousData['event-start-date']) ? "value= '{$previousData['event-start-date']}'" : '' ?> />
         </div>
         <div class="form-group">
           <label for="event-end-date">End date</label>
-          <input type="datetime-local" class="form-input" name="event-end-date" id="event-end-date" v-model="newEvent.endDate" @input="validateEndDate" />
+          <input type="datetime-local" class="form-input" name="event-end-date" id="event-end-date" <?= isset($previousData['event-end-date']) ? "value= '{$previousData['event-end-date']}'" : '' ?> />
           <div v-color:red v-if="errors.endDate" class="invalid-input-error">
-            {{ errors.endDate }}
+            <?php if (isset($errors['event-end-date'])) {
+              echo "<div  class='invalid-input-error'>
+                        {$errors['event-end-date']}
+                    </div>";
+            }
+            ?>
           </div>
         </div>
         <div class="form-group">
@@ -184,13 +207,12 @@ if (isset($_SESSION['user_id'])) {
         </div>
         <div class="form-group">
           <label for="event-color" class="mb-2">Event color</label>
-          <input class="form-control form-control-color" name="event-color" type="color" v-model="newEvent.color" />
+          <input class="form-control form-control-color" name="event-color" type="color" <?= isset($previousData['event-color']) ? "value= '{$previousData['event-color']}'" : '' ?> />
         </div>
         <div class="form-group">
           <label for="event-description">Event description</label>
-          <textarea class="form-input" name="event-description" id="event-description" rows="4" v-model="newEvent.description"></textarea>
+          <textarea class="form-input" name="event-description" id="event-description" rows="4"><?= isset($previousData['event-description']) ? $previousData['event-description'] : '' ?></textarea>
         </div>
-        <input type="hidden" name="user_id" value="<?php echo $userId ?>" />
       </div>
       <div class="modal-footer">
         <div class="button-group">
@@ -214,7 +236,11 @@ if (isset($_SESSION['user_id'])) {
   const eventModalClose = document.getElementById("event-modal-close");
   const modalCreateEvent = document.getElementById("modal-create-event");
   let dateTime = "";
-
+  <?php if ($_SESSION['is_modal_open']) {
+    echo 'modalCreateEvent.classList.remove("hidden");';
+    $_SESSION['is_modal_open'] = false;
+  }
+  ?>
   eventModalClose.onclick = () => {
     modalCreateEvent.classList.add("hidden");
   }
@@ -230,9 +256,7 @@ if (isset($_SESSION['user_id'])) {
 
   function closeEventsModal() {
     const modalEvents = document.getElementById("modal-events");
-    console.log("This:" + modalEvents);
     modalEvents.classList.add("hidden");
-
   }
 
   function openEventsModal(date) {
@@ -258,7 +282,7 @@ if (isset($_SESSION['user_id'])) {
 
     $.ajax({
       type: 'POST',
-      url: "modalEventsMore",
+      url: "/components/modalEventsMore.php",
       data: {
         dateTime: dateTime
       },

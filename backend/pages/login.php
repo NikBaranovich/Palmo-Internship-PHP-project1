@@ -1,3 +1,19 @@
+<?php
+$email = null;
+
+
+if (isset($_SESSION['previousData'])) {
+    $email = $_SESSION['previousData']['email'];
+    $_SESSION['previousData'] = null;
+}
+if (isset($_SESSION['errors'])) {
+    $errors = $_SESSION['errors'];
+    $_SESSION['errors'] = null;
+} else {
+    $errors = null;
+}
+?>
+
 <!doctype html>
 <html lang="en">
 
@@ -27,28 +43,36 @@
             <form action="./scripts/login_user.php" method="POST" class="form">
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" @input="validateEmail" required />
-                    <div v-color:red v-if="errors.email" class="invalid-input-error">
-                        {{ errors.email }}
-                    </div>
+                    <input type="text" id="email" name="email" <?= isset($email) ? "value= '$email'" : '' ?> />
+                    <?php if (isset($errors['email'])) {
+                        echo "<div  class='invalid-input-error'>
+                        {$errors['email']}
+                    </div>";
+                    }
+                    ?>
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required />
-                    <div class="error" v-if="error">{{ error }}</div>
+                    <input type="password" id="password" name="password" />
+                    <?php if (isset($errors['password'])) {
+                        echo "<div  class='invalid-input-error'>
+                        {$errors['password']}
+                    </div>";
+                    }
+                    ?>
                 </div>
                 <div class="form-group">
                     <input type="checkbox" id="remember" name="remember" />
                     <label for="remember" id="remember-label">Remember me</label>
                 </div>
+                <?php if (isset($errors['db'])) {
+                    echo "<div  class='invalid-input-error'>
+                        {$errors['db']}
+                    </div>";
+                }
+                ?>
                 <button type="submit" class="sign-in-button">Sign In</button>
             </form>
-            <button @click="signInWithGoogleHandler" class="google-button">
-                Sign In with Google
-            </button>
-            <div>
-                <router-link :to="{name: 'forgot'}">Forgot your password?</router-link>
-            </div>
         </div>
     </div>
 </body>

@@ -145,5 +145,5 @@ img {
 }
 .custom-button {
   max-width: 200px;
-  margin: 10px auto;
+  margin: 10px auto !important;
 }

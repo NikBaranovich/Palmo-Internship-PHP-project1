@@ -1,8 +1,22 @@
 <?php
-// if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])){
-//     header('Location: /');
-// }
+$email = null;
+$userName = null;
+
+if (isset($_SESSION['previousData'])) {
+    
+    $userName = $_SESSION['previousData']['username'];
+    print_r($userName);
+    $email = $_SESSION['previousData']['email'];
+    $_SESSION['previousData'] = null;
+}
+if (isset($_SESSION['errors'])) {
+    $errors = $_SESSION['errors'];
+    $_SESSION['errors'] = null;
+} else {
+    $errors = null;
+}
 ?>
+
 <!doctype html>
 <html lang="en">
 
@@ -28,37 +42,48 @@
     <div class="registration">
         <div class="registration-form">
             <h2>Registration</h2>
-            <form action ="./scripts/register.php" method="POST" class="form">
+            <form action="./scripts/register.php" method="POST" class="form">
                 <div class="form-group">
-                    <label for="email">Username:</label>
-                    <input type="text" id="username" name="username" @input="validateUsername" v-model="username" required />
-                    <div v-color:red v-if="errors.username" class="invalid-input-error">
-                        {{ errors.username }}
-                    </div>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" <?= isset($userName) ? "value= '$userName'": '' ?> />
+                    <?php if (isset($errors['username'])) {
+                        echo "<div  class='invalid-input-error'>
+                        {$errors['username']}
+                    </div>";
+                    }
+                    ?>
                 </div>
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" @input="validateEmail" v-model="email" required />
-                    <div v-color:red v-if="errors.email" class="invalid-input-error">
-                        {{ errors.email }}
-                    </div>
+                    <input type="text" id="email" name="email" <?= isset($email) ? "value= '$email'" : '' ?> />
+                    <?php if (isset($errors['email'])) {
+                        echo "<div  class='invalid-input-error'>
+                        {$errors['email']}
+                    </div>";
+                    }
+                    ?>
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" @input="validatePassword" v-model="password" required />
-                    <div v-color:red v-if="errors.password" class="invalid-input-error">
-                        {{ errors.password }}
-                    </div>
+                    <input type="password" id="password" name="password"/>
+                    <?php if (isset($errors['password'])) {
+                        echo "<div  class='invalid-input-error'>
+                        {$errors['password']}
+                    </div>";
+                    }
+                    ?>
                 </div>
-                <div class="error" v-if="error">{{ error }}</div>
+                <?php if (isset($errors['db'])) {
+                    echo "<div  class='invalid-input-error'>
+                        {$errors['db']}
+                    </div>";
+                }
+                ?>
                 <button type="submit" class="register-button">Register</button>
             </form>
-            <button @click="signInWithGoogleHandler" class="google-button">
-                Register with Google
-            </button>
             <div>
                 Already have an account?
-                <router-link :to="{name: 'login'}"> Login</router-link>
+                <a href='/login'> Login</router-link>
             </div>
         </div>
         <modal-message v-if="isModalVisible">

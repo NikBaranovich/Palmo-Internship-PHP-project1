@@ -32,7 +32,6 @@ function dispatch($action)
 
     $parts = explode('?', $action, 2);
     $path = trim($parts[0], '/');
-    $query = isset($parts[1]) ? $parts[1] : '';
 
     $callback = null;
     $params = [];
@@ -47,17 +46,18 @@ function dispatch($action)
 
         $match = true;
         foreach ($routeParts as $index => $routePart) {
+            if ((!empty($routePart)) && $routePart[0] === ":") {
+                $params[ltrim($routePart, ':')] = $pathParts[$index];
+            }
             if ($routePart !== $pathParts[$index] && strpos($routePart, ':') !== 0) {
                 $match = false;
+
                 break;
             }
         }
 
         if ($match) {
             $callback = $routeCallback;
-
-            parse_str($query, $queryArray);
-            $query = $queryArray;
 
             break;
         }
@@ -66,6 +66,6 @@ function dispatch($action)
     if (!$callback) {
         require "./pages/notFound.php";
     } else {
-        call_user_func($callback, ...[$pathParts, $query]);
+        call_user_func($callback, ...[$params]);
     }
 }

@@ -1,5 +1,5 @@
 <?php 
-$eventId = $params[1];
+$eventId = $params['id'];
 use Palmo\Core\service\Db;
 
 $dbh = (new Db())->getHandler();
@@ -15,7 +15,7 @@ if (isset($_SESSION['user_id'])) {
  $query->bindParam(':id', $eventId);
  $query->execute();
 
- $event = $query->fetchAll(PDO::FETCH_ASSOC)[0];
+ $event = $query->fetch(PDO::FETCH_ASSOC);
 } 
 
 ?>

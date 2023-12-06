@@ -247,3 +247,7 @@ body {
 #remember-label{
   display: inline-block !important;
 }
+
+.invalid-input-error{
+  color: red;
+}

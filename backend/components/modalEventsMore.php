@@ -1,5 +1,8 @@
 <?php
+require './../vendor/autoload.php';
 use Palmo\Core\service\Db;
+session_start();
+
 $userId = $_SESSION['user_id'];
 $dateTime = $_POST['dateTime']; 
 $date = date_format(date_create($dateTime), "l, d");
