@@ -2,7 +2,8 @@
 session_start();
 require __DIR__ . './../vendor/autoload.php';
 
-use Palmo\Core\service\Db;
+use Palmo\Core\service\UserDBHandler;
+use Palmo\Core\service\Validation;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -13,42 +14,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $avatarPath = "";
     $imageData =  $_FILES['image-file'];
 
-    if (!empty($imageData['size'])) {
-        if (!is_dir($saveFolderPath)) {
-            mkdir($saveFolderPath);
-        }
-        if (!is_dir($saveFolderUserPath)) {
-            mkdir($saveFolderUserPath);
-        }
-        $ext = pathinfo($imageData['name'], PATHINFO_EXTENSION);
-        $fileName = 'avatar_' . time() . ".{$ext}";
+    $errors['image'] =  Validation::validate('image', $imageData);
 
-        if (move_uploaded_file($imageData['tmp_name'], $saveFolderUserPath . $fileName)) {
-            $avatarPath = "users/$userId/avatars/$fileName";
-            saveImageToDatabase($userId, $avatarPath);
-        }
+    if ($errors['image']) {
+        $_SESSION['errors'] = $errors;
+        $_SESSION['modal_open']['image'] = true;
+        header("Location: /userPage");
+        exit();
+    }
+    if (!is_dir($saveFolderPath)) {
+        mkdir($saveFolderPath);
+    }
+    if (!is_dir($saveFolderUserPath)) {
+        mkdir($saveFolderUserPath);
+    }
+    $ext = pathinfo($imageData['name'], PATHINFO_EXTENSION);
+    $fileName = 'avatar_' . time() . ".{$ext}";
+
+    if (move_uploaded_file($imageData['tmp_name'], $saveFolderUserPath . $fileName)) {
+        $avatarPath = "users/$userId/avatars/$fileName";
+        (new UserDBHandler)->saveImageToDatabase($userId, $avatarPath);
     }
 }
 header("Location: /userPage");
+exit();
 
-function saveImageToDatabase($userId, $avatarPath)
-{
-    $dbh = (new Db)->getHandler();
-    $sql = "SELECT * FROM users WHERE id = :id";
-
-    $query = $dbh->prepare($sql);
-    $query->bindParam(':id', $userId);
-    $query->execute();
-
-    $user = $query->fetch(PDO::FETCH_ASSOC);
-    if ($user['image']) {
-        unlink("./../" . $user['image']);
-    }
-
-    $sql = "UPDATE users SET image = :image WHERE id = :id";
-
-    $query = $dbh->prepare($sql);
-    $query->bindParam(':id', $userId);
-    $query->bindParam(':image', $avatarPath);
-    $query->execute();
-}

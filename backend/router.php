@@ -1,19 +1,7 @@
 <?php
 
-/**
- * Holds the registered routes
- *
- * @var array $routes
- */
 $routes = [];
 
-/**
- * Register a new route
- *
- * @param $action string
- * @param \Closure $callback Called when current URL matches provided action
- * @param int $maxParameters Maximum allowed number of dynamic parameters for this route
- */
 function route($action, Closure $callback)
 {
     global $routes;
@@ -21,11 +9,6 @@ function route($action, Closure $callback)
     $routes[$action] = $callback;
 }
 
-/**
- * Dispatch the router
- *
- * @param $action string
- */
 function dispatch($action)
 {
     global $routes;
@@ -64,7 +47,7 @@ function dispatch($action)
     }
 
     if (!$callback) {
-        require "./pages/notFound.php";
+        header("Location: /404");
     } else {
         call_user_func($callback, ...[$params]);
     }

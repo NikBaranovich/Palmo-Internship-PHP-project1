@@ -1,0 +1,27 @@
+
+
+.notification {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    margin-bottom: 15px;
+    max-width: 300px;
+    text-align: center;
+}
+
+.notification p {
+    margin: 0;
+}
+
+.accept-btn, .reject-btn, .ok-btn {
+    background-color: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.accept-btn:hover, .reject-btn:hover, .ok-btn:hover {
+    background-color: #c9302c;
+}

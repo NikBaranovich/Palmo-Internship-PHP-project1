@@ -15,6 +15,8 @@ if (isset($_SESSION['user_id'])) {
     <?php
     if ($username) {
       echo "<div>
+        <a href='/messages' class='link'>Messages</a>
+
         <a href='/userPage' class='link user-info'>
           Welcome, $username
         </a>

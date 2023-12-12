@@ -2,11 +2,8 @@
 session_start();
 require __DIR__ . './../vendor/autoload.php';
 
-use Palmo\Core\service\Db;
+use Palmo\Core\service\UserDBHandler;
 use Palmo\Core\service\Validation;
-
-
-$dbh = (new Db())->getHandler();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -26,25 +23,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $password = password_hash($password, PASSWORD_DEFAULT);
-    $dbh = (new Db)->getHandler();
-    $sql = "INSERT INTO `users` (`username`, `email`, `password`) VALUES (:username, :email, :password)";
-
-    $query = $dbh->prepare($sql);
-    $query->bindParam(':username', $username);
-    $query->bindParam(':email', $email);
-    $query->bindParam(':password', $password);
-
-    try {
-        $query->execute();
-        $_SESSION['user_id'] = $dbh->lastInsertId();
-        $_SESSION['username'] = $username;
-        header('Location: /');
-        exit();
-    } catch (Exception $error) {
+    $userId = (new UserDBHandler)->createUser($username, $email, $password);
+    if (is_null($userId)) {
         $errors['db'] = "This email is already in use";
         $_SESSION['errors'] = $errors;
         header('Location: /register');
         exit();
     }
+    $_SESSION['user_id'] = $userId;
+    $_SESSION['username'] = $username;
+    header('Location: /');
+    exit();
 }

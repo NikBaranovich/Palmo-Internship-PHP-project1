@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . './../vendor/autoload.php';
+
 
 use Palmo\Core\service\Db;
 
@@ -22,6 +22,18 @@ if (isset($_SESSION['user_id'])) {
     $userImage = null;
   }
 }
+
+if (isset($_SESSION['previousData'])) {
+  $previousData = $_SESSION['previousData'];
+  $_SESSION['previousData'] = null;
+}
+if (isset($_SESSION['errors'])) {
+  $errors = $_SESSION['errors'];
+  $_SESSION['errors'] = null;
+} else {
+  $errors = null;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -53,7 +65,7 @@ if (isset($_SESSION['user_id'])) {
             <div class="pro-img">
               <div class="image-container">
                 <img class="image" referrerpolicy="no-referrer" src=<?= isset($userImage) ? $userImage :
-                                                                    $faker->imageUrl(360, 360, $username, false);
+                                                                      "https://via.placeholder.com/240x240.png/004466?text=$username"
                                                                     ?> alt="User Photo" />
                 <div class="overlay" onclick="openImageModal()">
                   <img class="camera-img" src="https://www.gstatic.com/images/icons/material/system/2x/photo_camera_white_24dp.png" />
@@ -66,7 +78,7 @@ if (isset($_SESSION['user_id'])) {
             </h3>
             <p><?php echo $userEmail ?></p>
           </div>
-          <button class="custom-button" @click="isPasswordModalOpen = true">
+          <button class="custom-button" onclick="openPasswordModal()">
             Change password
           </button>
         </div>
@@ -108,9 +120,12 @@ if (isset($_SESSION['user_id'])) {
               <div class="">
                 <label class="form-label" for="image-file">Select a new image</label>
                 <input class="form-control" type="file" name="image-file" id="image-file" @change="getFile" />
-                <div v-color:red v-if="fileError" class="invalid-input-error">
-                  {{ fileError }}
-                </div>
+                <?php if (isset($errors['image'])) {
+                  echo "<div  class='invalid-input-error'>
+                        {$errors['image']}
+                    </div>";
+                }
+                ?>
               </div>
             </div>
           </div>
@@ -125,43 +140,70 @@ if (isset($_SESSION['user_id'])) {
         </div>
       </form>
     </div>
-    <div class="custom-modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Edit Password</h2>
-        </div>
-        <div class="modal-body">
-          <div>
-            <div class="form-group">
-              <label for="username">New password:</label>
-              <input class="form-input" type="text" id="username" v-model="password" @input="validatePassword" />
-              <div v-color:red v-if="passwordError" class="invalid-input-error">
-                {{ passwordError }}
+    <div id="modal-pasword" class="custom-modal hidden">
+      <form action="./scripts/change_user_password.php" method="POST" enctype="multipart/form-data">
+
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Password</h2>
+          </div>
+          <div class="modal-body">
+            <div>
+              <div class="form-group">
+                <label for="username">New password:</label>
+                <input class="form-input" type="text" id="username" name="password" <?= isset($previousData['password']) ? "value= '{$previousData['password']}'" : '' ?> />
+                <?php if (isset($errors['password'])) {
+                  echo "<div  class='invalid-input-error'>
+                        {$errors['password']}
+                    </div>";
+                }
+                ?>
               </div>
             </div>
           </div>
-        </div>
-        <div class="modal-footer">
-          <div class="button-group">
-            <button type="button" @click="isPasswordModalOpen = false">
-              Cancel
-            </button>
-            <button @click="handleUpdatePassword">Update</button>
+          <div class="modal-footer">
+            <div class="button-group">
+              <button type="button" onclick="closePasswordModal()">
+                Cancel
+              </button>
+              <button type="submit">Update</button>
+            </div>
           </div>
-        </div>
-      </div>
+      </form>
+    </div>
 </body>
 
 </html>
 
 <script>
+  const imageModal = document.getElementById("modal-image");
+  const passwordModal = document.getElementById("modal-pasword");
+
+  <?php if (isset($_SESSION['modal_open']['password']) && $_SESSION['modal_open']['password']) {
+    echo 'passwordModal.classList.remove("hidden");';
+    $_SESSION['modal_open']['password'] = null;
+  }
+  ?>
+
+<?php if (isset($_SESSION['modal_open']['image']) && $_SESSION['modal_open']['image']) {
+    echo 'imageModal.classList.remove("hidden");';
+    unset($_SESSION['modal_open']['image']);
+  }
+  ?>
+
   function openImageModal() {
-    const imageModal = document.getElementById("modal-image");
     imageModal.classList.remove("hidden");
   }
 
   function closeImageModal() {
-    const imageModal = document.getElementById("modal-image");
     imageModal.classList.add("hidden");
+  }
+
+  function openPasswordModal() {
+    passwordModal.classList.remove("hidden");
+  }
+
+  function closePasswordModal() {
+    passwordModal.classList.add("hidden");
   }
 </script>

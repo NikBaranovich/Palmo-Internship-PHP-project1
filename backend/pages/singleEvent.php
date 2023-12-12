@@ -1,42 +1,45 @@
-<?php 
+<?php
 $eventId = $params['id'];
-use Palmo\Core\service\Db;
+if (!is_numeric($eventId)) {
+  header("Location: /404");
+  exit();
+}
 
-$dbh = (new Db())->getHandler();
+use Palmo\Core\service\EventDBHandler;
+
+
 
 if (isset($_SESSION['user_id'])) {
-  $userId = $_SESSION['user_id'];
-  
-  $sql = "SELECT * FROM `events`
-  WHERE id = :id
-  "; 
- $query = $dbh->prepare($sql);
 
- $query->bindParam(':id', $eventId);
- $query->execute();
+  $event = (new EventDBHandler())->getSingleEvent($eventId);
 
- $event = $query->fetch(PDO::FETCH_ASSOC);
-} 
+  if (is_null($event)) {
+    header("Location: /404");
+    exit();
+  }
+}
 
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./../css/style.css">
-    <link rel="stylesheet" href="./../css/single-event.css">
-    <link rel="stylesheet" href="./../css/navigation-panel.css">
-    <link rel="stylesheet" href="./../css/toggle-theme-switch.css">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <title>Document</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./../css/style.css">
+  <link rel="stylesheet" href="./../css/single-event.css">
+  <link rel="stylesheet" href="./../css/navigation-panel.css">
+  <link rel="stylesheet" href="./../css/toggle-theme-switch.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <title>Document</title>
 </head>
+
 <body>
-<?php
+  <?php
   include_once "./components/NavigationPanel.php";
   ?>
-<div class="event-info" v-if="event">
+  <div class="event-info" v-if="event">
     <div class="event-color" :style="{background: event.color}"></div>
     <div class="event-details">
       <h2 class="event-title"><?php echo $event['title'] ?></h2>
@@ -49,10 +52,7 @@ if (isset($_SESSION['user_id'])) {
       <button class="custom-button edit-button" @click="editClickHandler">
         Edit
       </button>
-      <button
-        class="custom-button delete-button"
-        @click="isMessageModalVisible = true"
-      >
+      <button class="custom-button delete-button" @click="isMessageModalVisible = true">
         Delete
       </button>
     </div>
@@ -64,61 +64,33 @@ if (isset($_SESSION['user_id'])) {
         <div>
           <div class="form-group">
             <label for="event-title">Event title</label>
-            <input
-              class="form-input"
-              type="text"
-              id="event-title"
-              v-model="editedEvent.title"
-              @input="validateTitle"
-            />
+            <input class="form-input" type="text" id="event-title" v-model="editedEvent.title" @input="validateTitle" />
             <div v-color:red v-if="errors.title" class="invalid-input-error">
               {{ errors.title }}
             </div>
           </div>
           <div class="form-group">
             <label for="event-date">Start date</label>
-            <custom-date-input
-              class="form-input"
-              @input="validateEndDate"
-              v-model="editedEvent.startDate"
-            />
+            <custom-date-input class="form-input" @input="validateEndDate" v-model="editedEvent.startDate" />
           </div>
           <div class="form-group">
             <label for="event-date">End date</label>
-            <custom-date-input
-              class="form-input"
-              @input="validateEndDate"
-              v-model="editedEvent.endDate"
-            />
+            <custom-date-input class="form-input" @input="validateEndDate" v-model="editedEvent.endDate" />
             <div v-color:red v-if="errors.endDate" class="invalid-input-error">
               {{ errors.endDate }}
             </div>
           </div>
           <div class="form-group">
             <label for="event-color" class="mb-2">Event color</label>
-            <input
-              class="form-control form-control-color"
-              type="color"
-              v-model="editedEvent.color"
-            />
+            <input class="form-control form-control-color" type="color" v-model="editedEvent.color" />
           </div>
           <div class="form-group">
             <label for="event-repeat">Repeat</label>
-            <custom-select
-              v-model="editedEvent.repeat"
-              class="form-input"
-              id="event-repeat"
-              :options="repeatOptions"
-            />
+            <custom-select v-model="editedEvent.repeat" class="form-input" id="event-repeat" :options="repeatOptions" />
           </div>
           <div class="form-group">
             <label for="event-description">Описание события</label>
-            <textarea
-              class="form-input"
-              id="event-description"
-              rows="4"
-              v-model="editedEvent.description"
-            ></textarea>
+            <textarea class="form-input" id="event-description" rows="4" v-model="editedEvent.description"></textarea>
           </div>
         </div>
       </template>
@@ -148,4 +120,5 @@ if (isset($_SESSION['user_id'])) {
     </modal-message>
   </div>
 </body>
+
 </html>

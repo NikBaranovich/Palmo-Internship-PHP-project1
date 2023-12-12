@@ -48,6 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $query->bindParam(':token_id', $tokenId);
                 $query->bindParam(':token_value',  $tokenValue);
                 $query->bindParam(':expires_at',  $expires);
+                $query->execute();
             }
             header('Location: /');
             exit();

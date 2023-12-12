@@ -251,3 +251,26 @@ body {
 .invalid-input-error{
   color: red;
 }
+
+datalist {
+  display: block !important;
+  position: absolute;
+  background-color: white;
+  border: 1px solid #adb5bd;
+  border-radius: 0 0 5px 5px;
+  border-top: none;
+  width: 100%;
+  padding: 5px;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+option {
+  padding: 4px;
+  margin-bottom: 1px;
+  cursor: pointer;
+}
+
+option:hover {
+  background-color: #d3d3d3;
+}

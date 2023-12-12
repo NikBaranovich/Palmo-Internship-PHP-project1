@@ -1,8 +1,5 @@
 <?php
 
-use Palmo\Core\service\Db;
-use Palmo\Core\service\Validation;
-
 require './scripts/get_calendar_with_events.php';
 
 if (isset($_SESSION['previousData'])) {
@@ -16,20 +13,23 @@ if (isset($_SESSION['errors'])) {
   $errors = null;
 }
 
-
-$dbh = (new Db())->getHandler();
 $displayedMonth = date_create();
 $currentDate = date_create();
-$year = date_format($currentDate, "y");
+$year = date_format($currentDate, "Y");
 $month = date_format($currentDate, "n");
 
 if (!isset($_GET['year']) && !isset($_GET['month'])) {
   $displayedMonth = date_create();
 } else {
-  $year = $_GET['year'];
-  $month = $_GET['month'];
+  if (is_numeric($_GET['year']) && $_GET['year'] >= 1970 && $_GET['year'] <= 2030) {
+    $year = $_GET['year'];
+  }
+  if (is_numeric($_GET['month']) && $_GET['month'] >= 1 && $_GET['month'] <= 12) {
+    $month = $_GET['month'];
+  }
   $displayedMonth = date_create("{$year}-{$month}-1");
 }
+
 
 $_SESSION['year'] = $year;
 $_SESSION['month'] = $month;
@@ -57,10 +57,10 @@ if ($nextMonth == 12) {
 
 if (isset($_SESSION['user_id'])) {
   $userId = $_SESSION['user_id'];
-  $weeks = getWeeksWithEvents($dbh, $userId, $displayedMonth);
+  $weeks = getWeeksWithEvents($userId, $displayedMonth);
 } else {
   session_destroy();
-  $weeks = getWeeks($dbh, $displayedMonth);
+  $weeks = getWeeks($displayedMonth);
 }
 
 
@@ -86,7 +86,6 @@ if (isset($_SESSION['user_id'])) {
 </head>
 
 <body>
-  <div id="test"></div>
   <?php
   include_once "./components/NavigationPanel.php";
   ?>
@@ -182,6 +181,19 @@ if (isset($_SESSION['user_id'])) {
           </div>
         </div>
         <div class="form-group">
+          <label for="event-user-send">Send event to user</label>
+          <fieldset class="position-relative">
+            <input type="text" class="form-control" autocomplete="off" list="" name="event-user-send" id="event-user-send" />
+            <datalist class="visually-hidden" id="user-options"> </datalist>
+            <?php if (isset($errors['event-user-send'])) {
+              echo "<div  class='invalid-input-error'>
+                        {$errors['event-user-send']}
+                    </div>";
+            }
+            ?>
+          </fieldset>
+        </div>
+        <div class="form-group">
           <label for="event-start-date">Start date</label>
           <input type="datetime-local" class="form-input" name="event-start-date" id="event-start-date" <?= isset($previousData['event-start-date']) ? "value= '{$previousData['event-start-date']}'" : '' ?> />
         </div>
@@ -236,7 +248,7 @@ if (isset($_SESSION['user_id'])) {
   const eventModalClose = document.getElementById("event-modal-close");
   const modalCreateEvent = document.getElementById("modal-create-event");
   let dateTime = "";
-  <?php if ($_SESSION['is_modal_open']) {
+  <?php if (isset($_SESSION['is_modal_open']) && $_SESSION['is_modal_open']) {
     echo 'modalCreateEvent.classList.remove("hidden");';
     $_SESSION['is_modal_open'] = false;
   }
@@ -253,6 +265,74 @@ if (isset($_SESSION['user_id'])) {
   const modalEvents = document.getElementById("modal-events");
   const modalEventsContent = document.getElementsByClassName("event-modal")[0];
 
+  const userInput = document.getElementById("event-user-send");
+  const datalistUsers = document.getElementById("user-options");
+
+  function fetchUsers(textEmail) {
+    $.ajax({
+      type: 'POST',
+      url: "/scripts/fetch_users.php",
+      data: {
+        textEmail: textEmail
+      },
+      success: function(users) {
+        users = JSON.parse(users);
+        datalistUsers.innerHTML = users.reduce(
+          (layout, user) =>
+          (layout += `
+    <option value="${user.email}">${user.email}</option>`),
+          ``
+        );
+      },
+      error: function(response) {}
+    });
+
+
+  }
+
+  function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        func.apply(this, args);
+      }, timeout);
+    };
+  }
+  userInput.oninput = debounce(() => {
+    console.log("jsdf")
+    const users = fetchUsers(userInput.value)
+  });
+
+  const hideElement = (element) => {
+    element.classList.add("visually-hidden");
+  };
+  const showElement = (element) => {
+    element.classList.remove("visually-hidden");
+  };
+
+  function handleTranslationInputClick(event, wordTranslationInput) {
+    const target = event.target;
+    wordTranslationInput.value = target.value;
+    hideElement(datalistUsers);
+  }
+  datalistUsers.addEventListener("click", (event) => {
+    handleTranslationInputClick(event, userInput);
+  });
+
+  userInput.onfocus = () => {
+    showElement(datalistUsers);
+  };
+
+  userInput.addEventListener("focusout", () => {
+    handleTranslationInputFocusOut(datalistUsers);
+  });
+
+  function handleTranslationInputFocusOut(datalistUsers) {
+    setTimeout(() => {
+      hideElement(datalistUsers);
+    }, 150);
+  }
 
   function closeEventsModal() {
     const modalEvents = document.getElementById("modal-events");

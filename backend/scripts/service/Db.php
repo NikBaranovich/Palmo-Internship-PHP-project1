@@ -15,13 +15,13 @@ class Db
 
         $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']}";
 
-        // $opt = [
-        //     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        //     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        //     PDO::ATTR_EMULATE_PREPARES => false,
-        // ];
+        $opt = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
 
-        $this->handler = new PDO($dsn, $dbConfig['user'], $dbConfig['password']);
+        $this->handler = new PDO($dsn, $dbConfig['user'], $dbConfig['password'], $opt);
     }
 
     public function getHandler(): PDO

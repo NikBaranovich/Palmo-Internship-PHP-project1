@@ -1,73 +1,6 @@
 <?php
 
-function getEvents($pdo, $userId, $startDate, $endDate)
-{
-    $sql = "SELECT * FROM `events` WHERE 
-            user_id = :user_id
-            AND ((start_date <= :endDate
-            AND end_date >= :startDate)
-            OR repeat_mode = 'monthly'
-            OR repeat_mode = 'annually')";
-
-    $query = $pdo->prepare($sql);
-    $userId = $userId;
-    $startDateString = date_format($startDate, 'Y-m-d');
-    $endDateString = date_format($endDate, 'Y-m-d');
-    $query->bindParam(':user_id', $userId);
-    $query->bindParam(':endDate', $endDateString);
-    $query->bindParam(':startDate', $startDateString);
-
-    $query->execute();
-
-    $events = $query->fetchAll(PDO::FETCH_ASSOC);
-    return $events;
-}
-
-function getEventsForDay($date, $currentEvents)
-{
-    $filteredEvents = array_filter($currentEvents, function ($event) use ($date) {
-        $eventStartDate = date_create($event['start_date']);
-        $eventEndDate = date_create($event['end_date']);
-
-        if (
-            date_format($date, "d-m-Y") >=  date_format($eventStartDate, "d-m-Y") &&
-            date_format($date, "d-m-Y") <= date_format($eventEndDate,  "d-m-Y")
-        ) {
-            return true;
-        }
-
-        if ($event['repeat_mode'] === "annually") {
-            $targetMonthDay = intval(date_format($date, 'nd'));
-            $eventStartMonthDay = intval(date_format($eventStartDate, 'nd'));
-            $eventEndMonthDay = intval(date_format($eventEndDate, 'nd'));
-
-            return (
-                $targetMonthDay >= $eventStartMonthDay &&
-                $targetMonthDay <= $eventEndMonthDay
-            );
-        }
-
-        if ($event['repeat_mode'] === "monthly") {
-            if (date_format($eventStartDate, 'd') > date_format($eventEndDate, 'd')) {
-                if (date_format($date, 'd') >= date_format($eventStartDate, 'd')) {
-                    return true;
-                }
-                if (date_format($date, 'd') <= date_format($eventEndDate, 'd')) {
-                    return true;
-                }
-            }
-            return (
-                date_format($date, 'd') >= date_format($eventStartDate, 'd') &&
-                date_format($date, 'd') <= date_format($eventEndDate, 'd')
-            );
-        }
-
-        return false;
-    });
-    $filteredEvents =  array_values($filteredEvents);
-    return $filteredEvents;
-}
-
+use Palmo\Core\service\EventDBHandler;
 
 class Day
 {
@@ -110,7 +43,7 @@ class Day
 }
 
 
-function getWeeks($pdo, $displayedMonth)
+function getWeeks($displayedMonth)
 {
     $firstDay = date_create(date_format($displayedMonth, 'Y-m-1'));
     $lastDay =  date_create(date_format($displayedMonth, 'Y-m-t'));
@@ -127,8 +60,6 @@ function getWeeks($pdo, $displayedMonth)
     $nextMonth = date_modify($firstDay, "+1 month");
     $nextMonthDay = date_modify($nextMonth, "+" . (6 - date_format($lastDay, "N")) . " days");
     $nextMonthDay = date_format($nextMonthDay, 'd');
-    $firstDisplayedDate = date_create(date_format($previousMonth, 'Y-m') . "-$prevMonthDay");
-    $lastDisplayedDate = date_create(date_format($nextMonth, 'Y-m') . "-$nextMonthDay");
 
 
     for ($j = 0; $j < $firstDayOfWeek; $j++) {
@@ -158,15 +89,14 @@ function getWeeks($pdo, $displayedMonth)
     return $calendar;
 }
 
-function getWeeksWithEvents($pdo, $userId, $displayedMonth)
+function getWeeksWithEvents($userId, $displayedMonth)
 {
-    $weeks = getWeeks($pdo, $displayedMonth);
-    $startDate = ($weeks[0][0])->getDate();
-    $endDate = end($weeks)[6]->getDate();
-    $currentEvents = getEvents($pdo, $userId, $startDate, $endDate);
-    $weeksWithEvents = array_map(function ($week) use ($currentEvents) {
-        return array_map(function ($day) use ($currentEvents) {
-            $day->setEvents(getEventsForDay($day->getDate(), $currentEvents));
+    $dbh = new EventDBHandler();
+
+    $weeks = getWeeks($displayedMonth);
+    $weeksWithEvents = array_map(function ($week) use ($dbh, $userId) {
+        return array_map(function ($day) use ($dbh, $userId) {
+            $day->setEvents($dbh->getEventsForDay($userId, date_format($day->getDate(), 'Y-m-dTH:i:s')));
             return $day;
         }, $week);
     }, $weeks);

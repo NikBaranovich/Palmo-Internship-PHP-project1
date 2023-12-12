@@ -2,8 +2,12 @@
 session_start();
 require __DIR__ . '/vendor/autoload.php';
 
+use Palmo\Core\middleware\AuthMiddleware;
+use Palmo\Core\middleware\GuestMiddleware;
 use Palmo\Core\service\Db;
-$faker = Faker\Factory::create();
+
+// require './scripts/generate_users.php';
+
 
 require_once "router.php";
 
@@ -37,46 +41,38 @@ route('/', function () {
 });
 
 route('/login', function () {
+    GuestMiddleware::handle("/");
 
-    if (isAuthorized()) {
-        header("Location: /");
-        return;
-    }
     require "./pages/login.php";
 });
 
 route('/register', function () {
-    if (isAuthorized()) {
-        header("Location: /");
-        return;
-    }
+    GuestMiddleware::handle("/");
+
     require "./pages/register.php";
 });
 route('/events/:id', function ($params) {
-    if (!isAuthorized()) {
-        header("Location: /");
-        return;
-    }
+    AuthMiddleware::handle("/");
+    
     require "./pages/singleEvent.php";
 });
 route('/events', function () {
-    if (!isAuthorized()) {
-        header("Location: /");
-        return;
-    }
+    AuthMiddleware::handle("/login");
+
     require "./pages/events.php";
 });
 route('/userPage', function () {
-    if (!isAuthorized()) {
-        header("Location: /");
-        return;
-    }
+    AuthMiddleware::handle("/");
+
     require "./pages/user.php";
+});
+route('/404', function () {
+    require "./pages/notFound.php";
+});
+route('/messages', function () {
+    require "./pages/messages.php";
 });
 
 $action = $_SERVER['REQUEST_URI'];
 
 dispatch($action);
-
-
-

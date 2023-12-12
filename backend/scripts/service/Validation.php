@@ -29,6 +29,9 @@ class Validation
             case 'endDate':
                 $error = ValidateEndDate::validate($data[0], $data[1]);
                 break;
+            case 'image':
+                $error = ValidateImage::validate($data[0]);
+                break;
             default:
                 $error = null;
                 break;
@@ -46,25 +49,26 @@ trait CommonValidation
 
     public static function validateMinLength($data, $minLength)
     {
-        return strlen($data) >= $minLength;
+        return mb_strlen($data) >= $minLength;
     }
 
     public static function validateMaxLength($data, $maxLength)
     {
-        return strlen($data) <= $maxLength;
+        return mb_strlen($data) <= $maxLength;
     }
 }
 
-trait CyrillicValidation
+trait FileValidation
 {
-    public static function validateMinLength($data, $minLength)
+    public static function validateEmpty($data)
     {
-        return mb_strlen($data) > $minLength;
+        return $data['size'] > 0;
     }
-
-    public static function validateMaxLength($data, $maxLength)
-    {
-        return mb_strlen($data) < $maxLength;
+    public static function validateMax($data, $maxSize){
+        return $data['size'] < $maxSize;
+    }
+    public static function validateFileType($data, $fileType){
+        return $data['type'] == $fileType;
     }
 }
 
@@ -113,10 +117,7 @@ class ValidatePassword implements ValidationRules
 
 class ValidateUsername implements ValidationRules
 {
-    use CommonValidation, CyrillicValidation {
-        CyrillicValidation::validateMinLength insteadof CommonValidation;
-        CyrillicValidation::validateMaxLength insteadof CommonValidation;
-    }
+    use CommonValidation;
 
     public static function validate($data)
     {
@@ -182,6 +183,24 @@ class ValidateTitle implements ValidationRules
     {
         $result = match (false) {
             self::validateEmpty($data) => "Title is required",
+            default => null
+        };
+
+        return $result;
+    }
+}
+class ValidateImage implements ValidationRules
+{
+    use CommonValidation, FileValidation{
+        FileValidation::validateEmpty insteadof CommonValidation;
+    }
+
+    public static function validate($data)
+    {
+        $result = match (false) {
+            self::validateEmpty($data) => "File is empty",
+            self::validateMax($data, 1000000) => "File size is too big",
+            self::validateFileType($data, "image/jpeg") => "Unsupported image format",
             default => null
         };
 
