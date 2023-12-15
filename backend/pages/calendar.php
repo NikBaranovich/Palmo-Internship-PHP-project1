@@ -90,14 +90,14 @@ if (isset($_SESSION['user_id'])) {
   include_once "./components/NavigationPanel.php";
   ?>
   <div class="month-navigation">
-    <a href="/?year=<?php echo $previousMonthYear ?>&month=<?php echo $previousMonth ?>" class="custom-button" @click="changeDisplayedMonth(-1)">
+    <a href="/?year=<?php echo $previousMonthYear ?>&month=<?php echo $previousMonth ?>" class="custom-button">
       Previous month
     </a>
     <?php
     echo '<h2>' . date_format($displayedMonth, "F Y") . '</h2>';
     ?>
 
-    <a href="/?year=<?php echo $nextMonthYear ?>&month=<?php echo $nextMonth ?>" class="custom-button" @click="changeDisplayedMonth(+1)">
+    <a href="/?year=<?php echo $nextMonthYear ?>&month=<?php echo $nextMonth ?>" class="custom-button">
       Next month
     </a>
   </div>
@@ -157,12 +157,12 @@ if (isset($_SESSION['user_id'])) {
   </div>
 
   <div id="modal-events" class="custom-more-modal hidden">
-    <div class="event-modal" :style="{left: coords.left, top: coords.top}">
+    <div class="event-modal">
 
     </div>
   </div>
 
-  <div id="modal-create-event" class="custom-modal hidden" @close="isModalVisible = false">
+  <div id="modal-create-event" class="custom-modal hidden">
     <form action="./scripts/create_event.php" enctype="multipart/form-data" method="POST" class="modal-content">
       <div class="modal-header">
         <h2>Add new event</h2>
@@ -171,7 +171,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="form-group">
           <label for="event-title">Event title</label>
           <input class="form-input" type="text" id="event-title" name="event-title" <?= isset($previousData['event-title']) ? "value= '{$previousData['event-title']}'" : '' ?> />
-          <div v-color:red v-if="errors.title" class="invalid-input-error">
+          <div class="invalid-input-error">
             <?php if (isset($errors['event-title'])) {
               echo "<div  class='invalid-input-error'>
                         {$errors['event-title']}
@@ -191,6 +191,9 @@ if (isset($_SESSION['user_id'])) {
                     </div>";
             }
             ?>
+            <div id="selected-users"></div>
+            <select name="selected-users[]" id="input-selected-users" multiple style="display: none;">  
+            </select>
           </fieldset>
         </div>
         <div class="form-group">
@@ -200,7 +203,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="form-group">
           <label for="event-end-date">End date</label>
           <input type="datetime-local" class="form-input" name="event-end-date" id="event-end-date" <?= isset($previousData['event-end-date']) ? "value= '{$previousData['event-end-date']}'" : '' ?> />
-          <div v-color:red v-if="errors.endDate" class="invalid-input-error">
+          <div class="invalid-input-error">
             <?php if (isset($errors['event-end-date'])) {
               echo "<div  class='invalid-input-error'>
                         {$errors['event-end-date']}
@@ -228,10 +231,10 @@ if (isset($_SESSION['user_id'])) {
       </div>
       <div class="modal-footer">
         <div class="button-group">
-          <button type="button" id="event-modal-close" class="custom-button" @click="isModalVisible = false">
+          <button type="button" id="event-modal-close" class="custom-button">
             Cancel
           </button>
-          <button type="submit" class="custom-button" @click="saveNewEvent">Add event</button>
+          <button type="submit" class="custom-button">Add event</button>
         </div>
 
     </form>
@@ -280,7 +283,7 @@ if (isset($_SESSION['user_id'])) {
         datalistUsers.innerHTML = users.reduce(
           (layout, user) =>
           (layout += `
-    <option value="${user.email}">${user.email}</option>`),
+    <option value="${user.email}" >${user.email}</option>`),
           ``
         );
       },
@@ -300,7 +303,6 @@ if (isset($_SESSION['user_id'])) {
     };
   }
   userInput.oninput = debounce(() => {
-    console.log("jsdf")
     const users = fetchUsers(userInput.value)
   });
 
@@ -310,15 +312,55 @@ if (isset($_SESSION['user_id'])) {
   const showElement = (element) => {
     element.classList.remove("visually-hidden");
   };
+  const hiddenInput = document.getElementById("input-selected-users");
+  const selectedUsersContainer = document.getElementById("selected-users");
 
-  function handleTranslationInputClick(event, wordTranslationInput) {
+  const selectedUsers = JSON.parse(`<?= isset($previousData['selected-users']) ? $previousData['selected-users'] : "[]"; ?>`);
+
+  updateSelectedUsers();
+  
+  function handleUserInputClick(event) {
     const target = event.target;
-    wordTranslationInput.value = target.value;
+
+    if (target.tagName === "OPTION" && !selectedUsers.includes(target.value)) {
+      selectedUsers.push(target.value);
+      updateSelectedUsers();
+      updateHiddenInput();
+    }
+
+    userInput.value = "";
     hideElement(datalistUsers);
   }
-  datalistUsers.addEventListener("click", (event) => {
-    handleTranslationInputClick(event, userInput);
-  });
+
+  function updateSelectedUsers() {
+    selectedUsersContainer.innerHTML = "";
+    selectedUsers.forEach(user => {
+      const userBlock = document.createElement("div");
+      userBlock.textContent = user;
+      userBlock.classList.add("selected-user");
+      userBlock.addEventListener("click", () => removeSelectedUser(user));
+      userBlock.style.cursor = "pointer";
+      selectedUsersContainer.appendChild(userBlock);
+    });
+  }
+
+  function removeSelectedUser(user) {
+    const userIndex = selectedUsers.indexOf(user);
+    if (userIndex !== -1) {
+      selectedUsers.splice(userIndex, 1);
+      updateSelectedUsers();
+      updateHiddenInput();
+    }
+  }
+
+  function updateHiddenInput() {
+    hiddenInput.innerHTML = selectedUsers.reduce((layout, user)=>{
+      layout += `<option value="${user}" selected>${user}</option>`;
+      return layout;
+    }, "");
+  }
+
+  datalistUsers.addEventListener("click", handleUserInputClick);
 
   userInput.onfocus = () => {
     showElement(datalistUsers);
@@ -362,7 +404,7 @@ if (isset($_SESSION['user_id'])) {
 
     $.ajax({
       type: 'POST',
-      url: "/components/modalEventsMore.php",
+      url: "/components/ModalEventsMore.php",
       data: {
         dateTime: dateTime
       },

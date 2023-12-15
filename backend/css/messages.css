@@ -1,11 +1,15 @@
 
-
+#messages{
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
 .notification {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+    background-color: #ddd7f8;
+    border: 1px solid #c6d8f5;
     padding: 15px;
     margin-bottom: 15px;
-    max-width: 300px;
+    max-width: 500px;
     text-align: center;
 }
 
@@ -14,7 +18,7 @@
 }
 
 .accept-btn, .reject-btn, .ok-btn {
-    background-color: #d9534f;
+    background-color:var(--button-color);
     color: #fff;
     border: none;
     padding: 5px 10px;
@@ -23,5 +27,5 @@
 }
 
 .accept-btn:hover, .reject-btn:hover, .ok-btn:hover {
-    background-color: #c9302c;
+    background-color: var(--button-accent);
 }

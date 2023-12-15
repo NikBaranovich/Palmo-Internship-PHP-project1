@@ -2,12 +2,11 @@
 session_start();
 require __DIR__ . './../vendor/autoload.php';
 
-use Palmo\Core\service\Db;
+use Palmo\Core\service\UserDBHandler;
 use Palmo\Core\service\Validation;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $dbh = (new Db)->getHandler();
 
     $newPassword = $_POST['password'];
 
@@ -22,12 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     $password = password_hash($newPassword, PASSWORD_DEFAULT);
 
-    $sql = "UPDATE users SET password = :password WHERE id = :id";
+    $id = $_SESSION['user_id'];
 
-    $query = $dbh->prepare($sql);
-    $query->bindParam(':password', $password);
-    $query->bindParam(':id', $_SESSION['user_id']);
-    $query->execute();
+    $dbh = new UserDBHandler();
+    $dbh->updatePassword($password, $id);
+
     header('Location: /userPage');
     exit();
 }

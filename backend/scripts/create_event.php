@@ -15,15 +15,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $errors['event-title'] =  Validation::validate('title', $_POST['event-title']);
     $errors['event-end-date'] =  Validation::validate('endDate', $_POST['event-start-date'], $_POST['event-end-date']);
 
-    $recepientEmail = $_POST['event-user-send'];
-
-    if ($recepientEmail) {
-        $userdbh = new UserDBHandler();
-        $recepient =  $userdbh->getUserByEmail($recepientEmail);
-        if (!$recepient) {
-            $errors['event-user-send'] = "User with this email does not exist!";
+    $recepientEmails = isset($_POST['selected-users']) ? $_POST['selected-users'] : null;
+    $recepients = [];
+    if ($recepientEmails) {
+        for ($i = 0; $i < count($recepientEmails); $i++) {
+            $userdbh = new UserDBHandler();
+            $recepient =  $userdbh->getUserByEmail($recepientEmails[$i]);
+            if (!$recepient) {
+                $wrongRecepientEmails[] = $recepientEmails[$i];
+                unset($recepientEmails[$i]);
+            } else {
+                $recepients[] = $recepient;
+            }
         }
+        if (isset($wrongRecepients)) {
+            $errors['event-user-send'] = "User with this email(s) does not exist: " . join(",", $wrongRecepientEmails);
+        }
+        $_POST['selected-users'] = json_encode(array_values($recepientEmails));
     }
+
 
 
     if (count(array_filter($errors))) {
@@ -45,10 +55,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $data['user_id']
     );
     $time = date('Y-m-d H:i:s', time());
-    
-    if ($recepientEmail) {
+
+    foreach ($recepients as $recepient) {
         $suggestionId = $eventdbh->sendEventToUser($_SESSION['user_id'], $recepient['id'], $eventId, $time);
-        $userdbh->createMessage($recepient['id'], "New event suggestion!", "User {$_SESSION['username']} suggested you an event", "suggestion", $time, $suggestionId);
+        $userdbh->createMessage($recepient['id'], "New event suggestion!", "User {$_SESSION['username']} suggested an event for you ({$data['event-title']})", "suggestion", $time, $suggestionId);
     }
 
     header("Location: /?year=$year&month=$month");

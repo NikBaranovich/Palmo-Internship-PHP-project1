@@ -74,7 +74,6 @@ if (isset($_SESSION['errors'])) {
             </div>
             <h3 class="m-b-0">
               <?php echo $username ?>
-              <img class="edit-name-image" src="@/assets/images/pencil-solid.svg" @click="isNameModalOpen = true" />
             </h3>
             <p><?php echo $userEmail ?></p>
           </div>
@@ -84,30 +83,7 @@ if (isset($_SESSION['errors'])) {
         </div>
       </div>
     </div>
-    <div class="custom-modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Edit Username</h2>
-        </div>
-        <div class="modal-body">
-          <div>
-            <div class="form-group">
-              <label for="username">New username:</label>
-              <input class="form-input" type="text" id="username" v-model="username" @input="validateUsername" />
-              <div v-color:red v-if="usernameError" class="invalid-input-error">
-                {{ usernameError }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <div class="button-group">
-            <button type="button" @click="isNameModalOpen = false">Cancel</button>
-            <button @click="handleUpdateUserName">Update</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    
     <div id="modal-image" class="custom-modal hidden">
       <form action="./scripts/save_image.php" method="POST" enctype="multipart/form-data">
         <div class="modal-content">
@@ -119,7 +95,7 @@ if (isset($_SESSION['errors'])) {
             <div>
               <div class="">
                 <label class="form-label" for="image-file">Select a new image</label>
-                <input class="form-control" type="file" name="image-file" id="image-file" @change="getFile" />
+                <input class="form-control" type="file" name="image-file" id="image-file" />
                 <?php if (isset($errors['image'])) {
                   echo "<div  class='invalid-input-error'>
                         {$errors['image']}

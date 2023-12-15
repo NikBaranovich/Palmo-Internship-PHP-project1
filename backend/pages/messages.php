@@ -23,28 +23,32 @@ if (isset($_SESSION['user_id'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
-    <title>Уведомления</title>
+    <title>Backend</title>
 </head>
 
 <body>
     <?php
     include_once "./components/NavigationPanel.php";
     ?>
-    <?php foreach ($messages as $message) {
-        if ($message['type'] == "suggestion") {
-            echo "<div class='notification' data-message-id = '{$message['id']}'>
-            <p>{$message['title']}<strong>{$message['description']}</strong></p>
-            <button class='accept-btn' onclick='acceptEvent({$message['id']})'>Принять</button>
-            <button class='reject-btn' onclick='declineEvent({$message['id']})'>Отклонить</button>
+    <div id="messages">
+        <?php foreach ($messages as $message) {
+            if ($message['type'] == "suggestion") {
+                echo "<div class='notification' data-message-id = '{$message['id']}'>
+                <h4>{$message['title']}</h4>
+            <p>{$message['description']}</p>
+            <button class='accept-btn' onclick='acceptEvent({$message['id']})'>Accept</button>
+            <button class='reject-btn' onclick='declineEvent({$message['id']})'>Decline</button>
             </div>";
-        } elseif ($message['type'] == "info") {
-            echo "<div class='notification' data-message-id = '{$message['id']}'>
-            <p>{$message['title']}<strong>{$message['description']}</strong></p>
+            } elseif ($message['type'] == "info") {
+                echo "<div class='notification' data-message-id = '{$message['id']}'>
+                <h4>{$message['title']}</h4>
+                <p>{$message['description']}</p>
             <button class='ok-btn' onclick='readMessage({$message['id']})'>OK</button>
             </div>";
+            }
         }
-    }
-    ?>
+        ?>
+    </div>
 </body>
 
 </html>
@@ -60,8 +64,7 @@ if (isset($_SESSION['user_id'])) {
                 action: "accept"
             },
             success: function(data) {
-                console.log(data);
-                document.querySelector(`.notification[data-message-id='${id}']`).remove()
+                window.location.href = "/";
             },
             error: function(response) {}
         });
@@ -78,8 +81,7 @@ if (isset($_SESSION['user_id'])) {
                 action: "decline"
             },
             success: function(data) {
-                console.log(data);
-                document.querySelector(`.notification[data-message-id='${id}']`).remove()
+                window.location.href = "/messages";
             },
             error: function(response) {}
         });
@@ -94,7 +96,7 @@ if (isset($_SESSION['user_id'])) {
                 type: "info"
             },
             success: function(users) {
-                document.querySelector(`.notification[data-message-id='${id}']`).remove()
+                window.location.href = "/messages";
             },
             error: function(response) {}
         });

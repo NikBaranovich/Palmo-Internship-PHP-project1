@@ -18,6 +18,10 @@ class UserDBHandler
 
     public function createUser($username, $email, $password)
     {
+        $username = htmlspecialchars($username);
+        $email = htmlspecialchars($email);
+        $password = htmlspecialchars($password);
+        
         $password = password_hash($password, PASSWORD_DEFAULT);
 
         $sql = "INSERT INTO `users` (`username`, `email`, `password`) VALUES (:username, :email, :password)";
@@ -102,69 +106,94 @@ class UserDBHandler
         $messages = $query->fetchAll(PDO::FETCH_ASSOC);
         return $messages;
     }
-    public function deleteMessage($messageId, $type, $action)
+    public function getMessagesCount($userId)
     {
-        if ($type == "suggestion") {
-            $sql = "SELECT * FROM user_messages WHERE id = :id;";
-            $query = $this->dbHandler->prepare($sql);
-            $query->bindParam(':id', $messageId);
-            $query->execute();
-            $message = $query->fetch(PDO::FETCH_ASSOC);
+        $sql = "SELECT COUNT(*) AS 'message-count'FROM user_messages WHERE user_id = :user_id;";
 
-            $sql = "SELECT * FROM event_suggestions WHERE id = :id;";
-            $query = $this->dbHandler->prepare($sql);
-            $query->bindParam(':id', $message['event_suggestion_id']);
-            $query->execute();
-            $suggestion = $query->fetch(PDO::FETCH_ASSOC);
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':user_id', $userId);
+        $query->execute();
+        $count = $query->fetch(PDO::FETCH_ASSOC);
+        return $count;
+    }
+    public function acceptSuggestion($messageId)
+    {
+        $sql = "SELECT
+        event_suggestions.id AS id,
+        recipient_id,
+        sender_id,
+        event_id,
+        recipient.username AS recipient_username,
+        recipient.email AS recipient_email,
+        events.title AS event_title
+        FROM
+            event_suggestions
+        INNER JOIN user_messages ON user_messages.event_suggestion_id = event_suggestions.id
+        INNER JOIN users AS recipient ON recipient.id = recipient_id
+        INNER JOIN events ON events.id = event_id
+        WHERE
+        user_messages.id = :id;";
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':id', $messageId);
+        $query->execute();
+        $suggestion = $query->fetch(PDO::FETCH_ASSOC);
 
-            $sql = "DELETE FROM event_suggestions WHERE id = :id";
-            $query = $this->dbHandler->prepare($sql);
-            $query->bindParam(':id', $suggestion['id']);
-            $query->execute();
+        $sql = "DELETE FROM event_suggestions WHERE id = :id";
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':id', $suggestion['id']);
+        $query->execute();
 
+        $time = date('Y-m-d H:i:s', time());
 
-            $time = date('Y-m-d H:i:s', time());
-            if ($action == "accept") {
-                $sql = "SELECT 
-                title,
-                description,
-                start_date,
-                end_date,
-                color,
-                repeat_mode
-                FROM events WHERE id = :id;";
-                $query = $this->dbHandler->prepare($sql);
-                $query->bindParam(':id', $suggestion['event_id']);
-                $query->execute();
+        $dbh = new EventDBHandler();
 
-                $event = $query->fetch(PDO::FETCH_ASSOC);
-                $event['user_id'] = $suggestion['recipient_id'];
+        $dbh->subscribeToEvent($suggestion['event_id'], $suggestion['recipient_id']);
+        $this->createMessage($suggestion['sender_id'], "Your event has been accepted!", "User {$suggestion['recipient_username']} ({$suggestion['recipient_email']}) accepted your event ({$suggestion['event_title']})!", "info", $time, null);
+    }
+    public function declineSuggestion($messageId)
+    {
+        $sql = "SELECT
+        event_suggestions.id AS id,
+        sender_id,
+        recipient.username AS recipient_username,
+        recipient.email AS recipient_email,
+        events.title AS event_title
+        FROM
+            event_suggestions
+        INNER JOIN user_messages ON user_messages.event_suggestion_id = event_suggestions.id
+        INNER JOIN users AS recipient ON recipient.id = recipient_id
+        INNER JOIN events ON events.id = event_id
+        WHERE
+        user_messages.id = :id;";
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':id', $messageId);
+        $query->execute();
+        $suggestion = $query->fetch(PDO::FETCH_ASSOC);
 
-                print_r($event);
+        $sql = "DELETE FROM event_suggestions WHERE id = :id";
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':id', $suggestion['id']);
+        $query->execute();
 
-                $dbh = new EventDBHandler();
-                $id = $dbh->createEvent(
-                    $event['title'],
-                    $event['description'],
-                    $event['start_date'],
-                    $event['end_date'],
-                    $event['color'],
-                    $event['repeat_mode'],
-                    $event['user_id']
-                );
-                print_r("eventID:" . $id);
-                $this->createMessage($suggestion['sender_id'], "Your event has been accepted!", "Your event has been accepted!", "info", $time, null);
-                return;
-            }
-            $this->createMessage($suggestion['sender_id'], "Your event has been declined!", "Your event has been declined!", "info", $time, null);
-            return;
-        }
-        if ($type == "info") {
-            $sql = "DELETE FROM user_messages WHERE id = :id;";
-            $query = $this->dbHandler->prepare($sql);
-            $query->bindParam(':id', $messageId);
-            $query->execute();
-            return;
-        }
+        $time = date('Y-m-d H:i:s', time());
+
+        $this->createMessage($suggestion['sender_id'], "Your event has been declined!", "User {$suggestion['recipient_username']} ({$suggestion['recipient_email']}) declined your event ({$suggestion['event_title']})!", "info", $time, null);
+    }
+    public function readMessage($messageId)
+    {
+        $sql = "DELETE FROM user_messages WHERE id = :id;";
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':id', $messageId);
+        $query->execute();
+        return;
+    }
+    public function updatePassword($password, $id){
+        $sql = "UPDATE users SET password = :password WHERE id = :id";
+
+        $query = $this->dbHandler->prepare($sql);
+        $query->bindParam(':password', $password);
+        $query->bindParam(':id', $id);
+        $query->execute();
+        return;
     }
 }

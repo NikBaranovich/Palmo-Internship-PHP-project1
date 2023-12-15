@@ -86,19 +86,7 @@ if (isset($_SESSION['errors'])) {
                 <a href='/login'> Login</router-link>
             </div>
         </div>
-        <modal-message v-if="isModalVisible">
-            <template v-slot:header>
-                <h2>Last one step</h2>
-            </template>
-            <template v-slot:content>
-                <p>
-                    Click the link we sent to {{ email }} to complete your account set-up.
-                </p>
-            </template>
-            <template v-slot:buttons>
-                <button class="message-button" @click="closeModal">Got It!</button>
-            </template>
-        </modal-message>
+        
     </div>
 </body>
 

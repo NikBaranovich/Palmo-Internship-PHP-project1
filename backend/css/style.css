@@ -1,6 +1,6 @@
 :root {
   --primary-color: #ffffff;
-  --text-color: #00000;
+  --text-color: #000000;
   --text-color-contrast: #fff;
   --secondary-color: #32a1f0;
   --button-color: #32a1f0;
@@ -273,4 +273,57 @@ option {
 
 option:hover {
   background-color: #d3d3d3;
+}
+
+.sort-container {
+  position: relative;
+  display: inline-block;
+  left: 5px;
+  top: 5px;
+}
+
+.sort-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 6px 10px;
+  border-color: transparent transparent #fff transparent;
+}
+.sort-label-background{
+  width: 25px;
+  height: 25px;
+  background-color: var(--secondary-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 3px;
+}
+#sortCheckbox {
+  display: none;
+}
+
+#sortCheckbox:checked + .sort-label {
+  border-width: 10px 6px 0;
+  border-color: #fff transparent transparent transparent;
+}
+.selected-users {
+  margin-top: 10px;
+}
+
+.selected-user {
+  display: inline-block;
+  padding: 5px 10px;
+  width: 135px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px;
+  margin-right: 5px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
 }

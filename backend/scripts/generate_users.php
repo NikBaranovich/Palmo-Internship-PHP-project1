@@ -9,7 +9,7 @@ $eventdbh = new EventDBHandler();
 $userdbh = new UserDBHandler();
 
 $sum = 0;
-for ($i = 0; $i < 20; $i++) {
+for ($i = 0; $i < 2; $i++) {
 
     $username = $faker->name();
     $email = $faker->email();
@@ -38,19 +38,27 @@ for ($i = 0; $i < 20; $i++) {
     (new UserDBHandler)->saveImageToDatabase($userId, $avatarPath);
 
     $repeat_mode = ["none", "monthly", "annually"];
-    for ($j = 0; $j < rand(10, 30); $j++) {
-        $startDate = date_format($faker->dateTimeBetween('2021-01-01', '2024-12-01'), "Y-m-d H:i:s");
-        $endDate =  date_format(date_modify(date_create($startDate), "+" . rand(0, 3) . " days"), "Y-m-d H:i:s");
+    // for ($j = 0; $j < rand(10, 30); $j++) {
+    //     $startDate = date_format($faker->dateTimeBetween('2021-01-01', '2024-12-01'), "Y-m-d H:i:s");
+    //     $endDate =  date_format(date_modify(date_create($startDate), "+" . rand(0, 3) . " days"), "Y-m-d H:i:s");
 
-        $data = [
-            'event-title' => $faker->word(),
-            'event-description' => $faker->text(),
-            'event-start-date' => $startDate,
-            'event-end-date' => $endDate,
-            'event-color' => $faker->hexColor(),
-            'event-repeat' => $repeat_mode[rand(0, 2)],
-            'user_id' => $userId
-        ];
-        $eventdbh->createEvent($data);
-    }
+    //     $data = [
+    //         'event-title' => $faker->word(),
+    //         'event-description' => $faker->text(),
+    //         'event-start-date' => $startDate,
+    //         'event-end-date' => $endDate,
+    //         'event-color' => $faker->hexColor(),
+    //         'event-repeat' => $repeat_mode[rand(0, 2)],
+    //         'user_id' => $userId
+    //     ];
+    //     $eventdbh->createEvent(
+    //         $data['event-title'], 
+    //         $data['event-description'], 
+    //         $data['event-start-date'],
+    //         $data['event-end-date'],
+    //         $data['event-color'],
+    //         $data['event-repeat'],
+    //         $data['user_id']
+    //     );
+    // }
 }

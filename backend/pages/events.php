@@ -31,13 +31,19 @@ if (isset($_GET['sort_by'])) {
     $sortBy = $_GET['sort_by'];
 }
 
+// Sort Desc
+$sortDesc = '';
+if (isset($_GET['sort_direction'])) {
+    $sortDesc = $_GET['sort_direction'] == "on";
+}
+
 $perPage = 2;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $perPage;
 
 $dbh = new EventDBHandler();
-$paginatedEvents = $dbh->filterEvents($userId, $filter, $searchTerm, $sortBy, $perPage, $offset);
-if(is_null($paginatedEvents)){
+$paginatedEvents = $dbh->filterEvents($userId, $filter, $searchTerm, $sortBy, $sortDesc, $perPage, $offset);
+if (is_null($paginatedEvents)) {
     header('Location: /404');
 }
 $totalEvents = $dbh->countFilteredEvents($userId, $filter, $searchTerm);
@@ -59,10 +65,6 @@ $totalPages = ceil($totalEvents / $perPage);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <title>Backend</title>
     <style>
-        body {
-            background-color: #f2f2f2;
-        }
-
         .filter-bar,
         .search-bar {
             background-color: #3498db;
@@ -100,6 +102,27 @@ $totalPages = ceil($totalEvents / $perPage);
             border-radius: 5px;
             background-color: #fff;
         }
+
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        .filter-bar label {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        input[type="radio"]:checked+label {
+            background-color: #20597f;
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -109,23 +132,36 @@ $totalPages = ceil($totalEvents / $perPage);
     ?>
     <form action="/events" method="GET">
         <div class="filter-bar">
-            <input type="radio" name="repeat_mode" value="none" <?php echo !empty($filter) &&  ($filter === 'none') ? 'checked' : ''; ?>>Без повторения</button>
-            <input type="radio" name="repeat_mode" value="monthly" <?php echo !empty($filter) &&  ($filter === 'monthly') ? 'checked' : ''; ?>>Ежемесячные</button>
-            <input type="radio" name="repeat_mode" value="annually" <?php echo !empty($filter) &&  ($filter === 'annually') ? 'checked' : ''; ?>>Ежегодные</button>
-            <input type="radio" name="repeat_mode" value="all" <?php echo (empty($filter)) || $filter === 'all' ? 'checked' : ''; ?>>Все события</button>
+            <input type="radio" name="repeat_mode" value="none" id= "none" <?php echo !empty($filter) &&  ($filter === 'none') ? 'checked' : ''; ?>/>
+            <label for="none">No repetition</label>
+            <input type="radio" name="repeat_mode" value="monthly" id= "monthly"  <?php echo !empty($filter) &&  ($filter === 'monthly') ? 'checked' : ''; ?>/>
+            <label for="monthly">Monthly</label>
+
+            <input type="radio" name="repeat_mode" value="annually" id= "annually" <?php echo !empty($filter) &&  ($filter === 'annually') ? 'checked' : ''; ?>/>
+            <label for="annually">Annual</label>
+
+            <input type="radio" name="repeat_mode" value="all" id= "all" <?php echo (empty($filter)) || $filter === 'all' ? 'checked' : ''; ?>/>
+            <label for="all">All</label>
+
         </div>
         <div class="search-bar">
-            <input name="search" type="search" id="searchInput" value =<?php echo !empty($sortBy) &&  ($sortBy === 'start_date') ? 'selected' : ''; ?> placeholder="Поиск...">
+            <input name="search" type="search" id="searchInput" value="<?php echo !empty($searchTerm) ? $searchTerm : ''; ?>" placeholder="Search...">
         </div>
-        <div class="sort-bar">
-            <label for="sortSelect">Сортировать по:</label>
+        <div class="sort-bar" style="display: inline-block;">
+            <label for="sortSelect">Sort by:</label>
             <select id="sortSelect" name="sort_by">
-                <option value="start_date" <?php echo !empty($sortBy) &&  ($sortBy === 'start_date') ? 'selected' : ''; ?>>Дата начала</option>
-                <option value="end_date" <?php echo !empty($sortBy) &&  ($sortBy === 'end_date') ? 'selected' : ''; ?>>Дата окончания</option>
-                <option value="title" <?php echo (empty($sortBy) ||  ($sortBy === 'title')) ? 'selected' : ''; ?>>Название</option>
+                <option value="start_date" <?php echo !empty($sortBy) &&  ($sortBy === 'start_date') ? 'selected' : ''; ?>>Start Date</option>
+                <option value="end_date" <?php echo !empty($sortBy) &&  ($sortBy === 'end_date') ? 'selected' : ''; ?>>End Date</option>
+                <option value="title" <?php echo (empty($sortBy) ||  ($sortBy === 'title')) ? 'selected' : ''; ?>>Title</option>
             </select>
         </div>
-        <button type="submit">Применить</button>
+        <div class="sort-container">
+            <label for="sortCheckbox" class="sort-label-background">
+                <input type="checkbox" id="sortCheckbox" name="sort_direction" <?= $sortDesc ? "checked" : "" ?>>
+                <div class="sort-label"></div>
+            </label>
+        </div>
+        <button type="submit" class="my-2" style="display: block;">Search</button>
 
     </form>
     <ul class="event-list">

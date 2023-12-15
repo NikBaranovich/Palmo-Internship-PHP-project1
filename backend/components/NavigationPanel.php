@@ -1,9 +1,16 @@
 <?php
+
+use Palmo\Core\service\UserDBHandler;
+
 $username = null;
 
 if (isset($_SESSION['user_id'])) {
   $username = $_SESSION['username'];
+
+  $dbh = new UserDBHandler();
+  $messagesCount = $dbh->getMessagesCount($_SESSION['user_id'])['message-count'];
 }
+
 ?>
 
 <nav class="navbar">
@@ -15,8 +22,13 @@ if (isset($_SESSION['user_id'])) {
     <?php
     if ($username) {
       echo "<div>
-        <a href='/messages' class='link'>Messages</a>
-
+        <a href='/messages' class='link'>Messages";
+      if ($messagesCount) {
+        echo "<span class='position-absolute translate-middle badge rounded-pill bg-danger'>
+          $messagesCount
+        </span>";
+      }
+      echo "</a>
         <a href='/userPage' class='link user-info'>
           Welcome, $username
         </a>
